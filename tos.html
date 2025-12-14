@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOS Generator - @chrissalvacion</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #003366; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Section Styling */
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #fafafa; }
+        .section-title { font-weight: bold; margin-bottom: 10px; color: #555; display: block; }
+        
+        /* Input Grouping */
+        .input-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; }
+        .input-item { flex: 1; min-width: 200px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Radio Group */
+        .radio-group { display: flex; align-items: center; gap: 10px; height: 38px; }
+        .radio-group label { margin: 0; font-weight: normal; }
+
+        /* Dynamic Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; vertical-align: middle; }
+        th { background-color: #003366; color: white; }
+        input.table-input { width: 95%; border: 1px solid #ddd; padding: 5px; }
+        input[readonly] { background-color: #e9ecef; cursor: not-allowed; }
+
+        /* Test Type Checkboxes */
+        .test-types { text-align: left; display: flex; flex-direction: column; gap: 2px; font-size: 0.85em; }
+        
+        /* Buttons */
+        .btn-area { margin-top: 20px; text-align: right; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; transition: 0.3s; }
+        .btn-generate { background-color: #28a745; color: white; }
+        .btn-export { background-color: hwb(210 2% 65%); color: white; margin-left: 10px; display: none; } /* Hidden initially */
+        button:hover { opacity: 0.9; }
+
+        /* Hidden export template */
+        #export-content { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Table of Specification (TOS) Generator</h1>
+
+    <div class="section">
+        <span class="section-title">Course & Exam Details</span>
+        <div class="input-group">
+            <div class="input-item">
+                <label>Course Code/Title</label>
+                <input type="text" id="courseCode" placeholder="e.g., IASEC 2">
+            </div>
+            <div class="input-item">
+                <label>Academic Year</label>
+                <input type="text" id="acadYear" placeholder="e.g., 2025-2026">
+            </div>
+             <div class="input-item">
+                <label>Semester</label>
+                <select id="semester">
+                    <option value="1st Semester">1st Semester</option>
+                    <option value="2nd Semester">2nd Semester</option>
+                    <option value="Summer">Summer</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group">
+            <div class="input-item" style="flex: 2;">
+                <label>Exam Period</label>
+                <div class="radio-group">
+                    <input type="radio" name="examPeriod" value="Midterm" checked onclick="toggleOther(false)"> Midterm
+                    <input type="radio" name="examPeriod" value="Finals" onclick="toggleOther(false)"> Finals
+                    <input type="radio" name="examPeriod" value="Others" onclick="toggleOther(true)"> Others
+                    <input type="text" id="otherSpecify" placeholder="Specify..." style="width: 150px; display:none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <span class="section-title">Calculation Parameters</span>
+        <div class="input-group">
+            <div class="input-item">
+                <label>Total Content/Topics</label>
+                <input type="number" id="numTopics" value="3" min="1">
+            </div>
+            <div class="input-item">
+                <label>Total Items</label>
+                <input type="number" id="totalItems" value="80" min="1">
+            </div>
+            <div class="input-item">
+                <label>Total Hours</label>
+                <input type="number" id="totalHours" value="45" min="1">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-item" style="flex: 1;">
+                <label>Test Type</label>
+                <select id="testTypeSelect">
+                    <option value="">Select a test type...</option>
+                    <option value="Multiple Choice">Multiple Choice</option>
+                    <option value="Simple Recall">Simple Recall</option>
+                    <option value="Alternative Response">Alternative Response</option>
+                    <option value="Essay">Essay</option>
+                    <option value="Problem Solving">Problem Solving</option>
+                    <option value="Matching Type">Matching Type</option>
+                </select>
+            </div>
+            <div class="input-item" style="flex: 1;">
+                <label>Number of Items</label>
+                <input type="number" id="testTypeItems" value="10" min="1">
+            </div>
+            <div class="input-item" style="flex: 2; display: flex; align-items: flex-end;">
+                <button onclick="addTestType()" style="background-color: #00155c; color: white; padding: 8px 15px;">Add Test Type</button>
+            </div>
+        </div>
+
+        <div id="selectedTestTypes" style="margin-top: 15px; padding: 10px; background-color: #f0f0f0; border-radius: 4px; display: none;">
+            <label style="font-weight: bold; display: block; margin-bottom: 8px;">Selected Test Types:</label>
+            <div id="testTypesList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+
+        <script>
+        let selectedTestTypes = {};
+
+        function addTestType() {
+            const type = document.getElementById('testTypeSelect').value;
+            const items = parseInt(document.getElementById('testTypeItems').value) || 0;
+            
+            if (!type) {
+                alert("Please select a test type.");
+                return;
+            }
+            if (items <= 0) {
+                alert("Please enter a valid number of items.");
+                return;
+            }
+            
+            selectedTestTypes[type] = items;
+            updateTestTypesList();
+            document.getElementById('testTypeSelect').value = '';
+            document.getElementById('testTypeItems').value = '10';
+        }
+
+        function removeTestType(type) {
+            delete selectedTestTypes[type];
+            updateTestTypesList();
+        }
+
+        function updateTestTypesList() {
+            const container = document.getElementById('selectedTestTypes');
+            const list = document.getElementById('testTypesList');
+            
+            if (Object.keys(selectedTestTypes).length === 0) {
+                container.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = Object.entries(selectedTestTypes).map(([type, items]) => 
+                `<span style="background-color: #00155c; color: white; padding: 5px 10px; border-radius: 08px; font-size: 0.9em;">
+                    ${type} (${items}) <button onclick="removeTestType('${type}')" style="background: none; border: none; color: white; cursor: pointer; margin-left: 5px;">✕</button>
+                </span>`
+            ).join('');
+        }
+        </script>
+
+        <div class="btn-area" style="text-align: left;">
+            <button class="btn-generate" onclick="generateTableUI()">Generate Input Table</button>
+        </div>
+    </div>
+
+    <div id="tableContainer" style="display:none;">
+        <table id="inputTable">
+            <thead>
+                <tr>
+                    <th width="20%">Content / Topics</th>
+                    <th width="20%">Intended Learning Outcomes (ILO)</th>
+                    <th width="10%">Hierarchy of Domain</th>
+                    <th width="8%">Time Allotment (Hours)</th>
+                    <th width="8%">Relative Weight</th>
+                    <th width="8%">No. of Items</th>
+                    <th width="15%">Test Types (Max 5)</th>
+                    <th width="11%">Item Locator (Random)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                    <td><span id="sumHours">0</span></td>
+                    <td><span id="sumWeight">0.0</span></td>
+                    <td><span id="sumItems">0</span></td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="btn-area">
+            <button class="btn-generate" onclick="calculateAndDistribute()">Calculate & Randomize Locators</button>
+            <button class="btn-export" id="btnExport" onclick="exportToWord()">Export to .docx</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle "Others" input field
+    function toggleOther(show) {
+        document.getElementById('otherSpecify').style.display = show ? 'inline-block' : 'none';
+    }
+
+    // Generate the rows for data entry
+    function generateTableUI() {
+        const numTopics = parseInt(document.getElementById('numTopics').value) || 0;
+        const totalItems = parseInt(document.getElementById('totalItems').value) || 0;
+        const totalHours = parseInt(document.getElementById('totalHours').value) || 0;
+
+        if (numTopics <= 0 || totalItems <= 0 || totalHours <= 0) {
+            alert("Please enter valid numbers for Topics, Items, and Hours.");
+            return;
+        }
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = ""; // Clear existing
+
+        for (let i = 0; i < numTopics; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td><textarea class="table-input" rows="3" placeholder="Enter Topic..." style="width: 100%; height: auto; box-sizing: border-box;"></textarea></td>
+            <td><textarea class="table-input ilo-textarea" rows="3" placeholder="Enter ILO..." style="width: 100%; height: auto; box-sizing: border-box;"></textarea></td>
+            <td>
+                <div class="domain-selects" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 5px;"></div>
+            </td>
+            <td><input type="number" class="table-input time-input" min="0" step="0.5" onchange="calculateSimple()" placeholder="Hrs" style="width: 100%; box-sizing: border-box;"></td>
+            <td><input type="text" class="table-input weight-output" readonly style="width: 100%; box-sizing: border-box;"></td>
+            <td><input type="text" class="table-input items-output" readonly style="width: 100%; box-sizing: border-box;"></td>
+            <td>
+                <div class="test-types" style="width: 100%; box-sizing: border-box;">
+                <label><input type="checkbox" value="Multiple Choice"> Multiple Choice</label>
+                <label><input type="checkbox" value="Simple Recall"> Simple Recall</label>
+                <label><input type="checkbox" value="Alternative Response"> Alternative Response</label>
+                <label><input type="checkbox" value="Essay"> Essay</label>
+                <label><input type="checkbox" value="Problem Solving"> Problem Solving</label>
+                <label><input type="checkbox" value="Matching Type"> Matching Type</label>
+                </div>
+            </td>
+            <td><textarea class="table-input locator-output" readonly rows="3" style="width: 100%; font-size:0.8em; box-sizing: border-box;"></textarea></td>
+            `;
+            tbody.appendChild(tr);
+            
+            // Add event listener to ILO textarea to generate domain selects
+            const iloTextarea = tr.querySelector('.ilo-textarea');
+            const domainContainer = tr.querySelector('.domain-selects');
+            
+            iloTextarea.addEventListener('input', function() {
+            const paragraphs = this.value.split('\n').filter(p => p.trim());
+            domainContainer.innerHTML = '';
+            
+            paragraphs.forEach((para, index) => {
+                const select = document.createElement('select');
+                select.className = 'table-input domain-select';
+                select.innerHTML = `
+                <option value="Remembering">Remembering</option>
+                <option value="Understanding">Understanding</option>
+                <option value="Applying">Applying</option>
+                <option value="Analyzing">Analyzing</option>
+                <option value="Evaluating">Evaluating</option>
+                <option value="Creating">Creating</option>
+                `;
+                select.style.width = '100%';
+                select.style.boxSizing = 'border-box';
+                domainContainer.appendChild(select);
+            });
+            });
+        }
+
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('btnExport').style.display = 'none'; // Hide export until calculated
+    }
+
+    // Simple Calculation (Updates weights as user types time)
+    function calculateSimple() {
+        const totalHours = parseFloat(document.getElementById('totalHours').value);
+        const rows = document.querySelectorAll('#tableBody tr');
+        let currentSumHours = 0;
+
+        rows.forEach(row => {
+            const timeVal = parseFloat(row.querySelector('.time-input').value) || 0;
+            currentSumHours += timeVal;
+            
+            // Calc Weight
+            const weight = (timeVal / totalHours);
+            row.querySelector('.weight-output').value = weight > 0 ? weight.toFixed(2) : "0.00";
+        });
+        
+        document.getElementById('sumHours').innerText = currentSumHours;
+    }
+
+    // Main Logic: Calculate Items & Randomize Locators by Test Type
+    function calculateAndDistribute() {
+        const totalItems = parseInt(document.getElementById('totalItems').value);
+        const totalHours = parseFloat(document.getElementById('totalHours').value);
+        const rows = document.querySelectorAll('#tableBody tr');
+
+        // 1. Calculate total items per test type from selectedTestTypes
+        const testTypeDistribution = {};
+        Object.entries(selectedTestTypes).forEach(([type, count]) => {
+            testTypeDistribution[type] = count;
+        });
+
+        // 2. Create pools for each test type [1, 2, 3, ...]
+        const testTypePools = {};
+        Object.entries(testTypeDistribution).forEach(([type, count]) => {
+            testTypePools[type] = [];
+            for (let i = 1; i <= count; i++) {
+                testTypePools[type].push(i);
+            }
+            // Shuffle each pool
+            const pool = testTypePools[type];
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+        });
+
+        // 3. Calculate weights and item allocations per row
+        let rowData = [];
+        rows.forEach((row, index) => {
+            const timeVal = parseFloat(row.querySelector('.time-input').value) || 0;
+            const weight = timeVal / totalHours;
+            
+            // Allocate items per test type based on weight
+            const allocation = {};
+            Object.entries(testTypeDistribution).forEach(([type, totalCount]) => {
+                allocation[type] = Math.round(totalCount * weight);
+            });
+            
+            rowData.push({ rowElement: row, weight: weight, allocation: allocation });
+        });
+
+        // 4. Adjust allocations to match exact totals per test type
+        Object.entries(testTypeDistribution).forEach(([type, totalCount]) => {
+            let assigned = 0;
+            rowData.forEach(data => {
+                assigned += data.allocation[type];
+            });
+            
+            const diff = totalCount - assigned;
+            if (diff !== 0 && rowData.length > 0) {
+                rowData[0].allocation[type] += diff;
+            }
+        });
+
+        // 5. Assign locators to rows based on selected test types
+        let currentSumItems = 0;
+        let currentSumWeight = 0;
+
+        rows.forEach((row, index) => {
+            const data = rowData.find(d => d.rowElement === row);
+            
+            // Get checked test types for this row
+            const selectedTypes = [];
+            row.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                selectedTypes.push(cb.value);
+            });
+
+            // Build locator string for selected test types
+            let locatorText = "";
+            let rowTotalItems = 0;
+            
+            selectedTypes.forEach((type, typeIndex) => {
+                const count = data.allocation[type] || 0;
+                const locators = testTypePools[type].splice(0, count);
+                locators.sort((a, b) => a - b);
+                
+                if (typeIndex > 0) locatorText += "\n";
+                locatorText += `${type}: ${locators.join(", ")}`;
+                rowTotalItems += count;
+            });
+
+            row.querySelector('.locator-output').value = locatorText;
+            row.querySelector('.items-output').value = rowTotalItems;
+            row.querySelector('.weight-output').value = data.weight.toFixed(2);
+            
+            currentSumItems += rowTotalItems;
+            currentSumWeight += data.weight;
+        });
+
+        // Update Footers
+        document.getElementById('sumWeight').innerText = currentSumWeight.toFixed(1);
+        document.getElementById('sumItems').innerText = currentSumItems;
+
+        document.getElementById('btnExport').style.display = 'inline-block';
+    }
+
+    function exportToWord() {
+        const course = document.getElementById('courseCode').value;
+        const ay = document.getElementById('acadYear').value;
+        const sem = document.getElementById('semester').value;
+        let exam = document.querySelector('input[name="examPeriod"]:checked').value;
+        if(exam === "Others") exam = document.getElementById('otherSpecify').value;
+
+        // Build Table HTML for Export
+        let tableRows = "";
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(row => {
+            const topic = row.querySelector('textarea').value;
+            const ilo = row.querySelectorAll('textarea')[1].value;
+            const domainSelect = row.querySelector('.domain-select');
+            const domain = domainSelect ? domainSelect.value : '';
+            const time = row.querySelector('.time-input').value;
+            const weight = row.querySelector('.weight-output').value;
+            const items = row.querySelector('.items-output').value;
+            const locators = row.querySelector('.locator-output').value;
+            
+            // Get selected checkboxes
+            let types = [];
+            row.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => types.push(cb.value));
+            
+            tableRows += `
+                <tr>
+                    <td>${topic}</td>
+                    <td>${ilo}</td>
+                    <td>${domain}</td>
+                    <td align="center">${time}</td>
+                    <td align="center">${weight}</td>
+                    <td align="center">${items}</td>
+                    <td>${types.join(", ")}</td>
+                    <td>${locators}</td>
+                </tr>
+            `;
+        });
+
+        const totalHours = document.getElementById('sumHours').innerText;
+        const totalItems = document.getElementById('sumItems').innerText;
+
+        const header = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>TOS Export</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                table { width: 100%; border-collapse: collapse; border: 1px solid black; }
+                td, th { border: 1px solid black; padding: 5px; font-size: 11pt; }
+                .header { text-align: center; font-family: 'Times New Roman', serif; }
+                .subhead { font-size: 10pt; }
+            </style>
+            </head><body>
+            <div class="header">
+                <p style="margin:0;">Republic of the Philippines</p>
+                <h3 style="margin:5px 0;">UNIVERSITY OF ANTIQUE</h3>
+                <p style="margin:0;">TARIO LIM MEMORIAL CAMPUS</p>
+                <p style="margin:0;">Tibiao, Antique</p>
+                <br>
+                <p style="margin:0; font-weight:bold;">COLLEGE OF COMPUTING AND INFORMATION SCIENCES</p>
+                <p style="margin:0; font-size:10pt;">tlmc.ccs@antiquespride.edu.ph</p>
+                <br>
+                <h4 style="margin:10px 0;">TABLE OF SPECIFICATION IN ${course.toUpperCase()}</h4>
+                <p style="margin:0;">
+                    ${exam === 'Midterm' ? '☑' : '☐'} Midterm &nbsp;&nbsp; 
+                    ${exam === 'Finals' ? '☑' : '☐'} Finals &nbsp;&nbsp; 
+                    ${['Midterm', 'Finals'].includes(exam) ? '☐' : '☑'} Others: ${['Midterm', 'Finals'].includes(exam) ? '______' : exam}
+                </p>
+                <p style="margin:0;">${sem}, A.Y. ${ay}</p>
+                <br>
+            </div>
+            <table>
+                <thead>
+                    <tr style="background-color: #cccccc;">
+                        <th>Content/Topics</th>
+                        <th>Intended Learning Outcomes</th>
+                        <th>Hierarchy of Domain</th>
+                        <th>Time Allotment</th>
+                        <th>Relative Weight</th>
+                        <th>No. of Items</th>
+                        <th>Test Type</th>
+                        <th>Item Locator</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" align="right"><b>TOTAL</b></td>
+                        <td align="center"><b>${totalHours}</b></td>
+                        <td align="center"><b>1.0</b></td>
+                        <td align="center"><b>${totalItems}</b></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <br><br>
+            <div style="width: 100%;">
+                <table style="border: none;">
+                    <tr style="border: none;">
+                        <td style="border: none; width: 50%;">Prepared by: <br><br>________________________<br>Course Instructor</td>
+                    <tr style="border: none;">
+                        <td style="border: none; width: 50%;">Checked and Verifed by:<br><br>________________________<br>Program Head, BSIT</td>
+                        <td style="border: none; width: 50%;">Approved by:<br><br>________________________<br>Dean/Program Head</td>
+                    </tr>
+                </table>
+            </div>
+            </body></html>
+        `;
+
+        const blob = new Blob(['\ufeff', header], {
+            type: 'application/msword'
+        });
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${course}_TOS_${exam}.doc`; // .doc is more compatible with simple HTML structure than .docx
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
